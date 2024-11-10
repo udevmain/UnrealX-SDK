@@ -1,0 +1,24 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "UnrealX",
+	"Description": "",
+	"Category": "Other",
+	"CreatedBy": "udev",
+	"CreatedByURL": "https://github.com/udevmain",
+	"DocsURL": "https://github.com/udevmain/UnrealX-SDK",
+	"MarketplaceURL": "",
+	"SupportURL": "https://t.me/udev_support",
+	"CanContainContent": true,
+	"IsBetaVersion": true,
+	"IsExperimentalVersion": true,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "UnrealX",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
