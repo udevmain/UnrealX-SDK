@@ -15,13 +15,17 @@ public class UnrealX : ModuleRules
 		});
 			
 		PrivateDependencyModuleNames.AddRange(
-		new string[]
-		{
+			new string[]
+			{
 			"CoreUObject",
 			"Engine",
 			"Slate",
 			"SlateCore",
-			"HTTP"
-		});
+			"HTTP",
+			"UnrealXMysqlLib",
+			"UnrealXMysqlZLib",
+			"UnrealXMysqlZstd",
+			}
+		);
 	}
 }

@@ -3,10 +3,10 @@
 
 #include "UnrealX_Types.h"
 
-UnrealX_Types::FriendlySDK_Types()
+UnrealX_Types::UnrealX_Types()
 {
 }
 
-UnrealX_Types::~FriendlySDK_Types()
+UnrealX_Types::~UnrealX_Types()
 {
 }
