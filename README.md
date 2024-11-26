@@ -75,7 +75,7 @@ To get started with **UnrealX SDK**, follow these steps:
 
 2. **Install Dependencies**: Refer to the documentation for setting up the environment and installing necessary dependencies.
 
-3. **Documentation**: Detailed setup and usage instructions can be found in the `docs/` directory or at [Documentation Link].
+3. **Documentation**: Detailed setup and usage instructions can be found in the `docs/` directory.
 
 ---
 
