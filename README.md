@@ -70,22 +70,12 @@ To get started with **UnrealX SDK**, follow these steps:
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/YourRepo/UnrealX-SDK.git
+   git clone https://github.com/UnrealX-SDK/UnrealX-SDK.git
    ```
 
 2. **Install Dependencies**: Refer to the documentation for setting up the environment and installing necessary dependencies.
 
 3. **Documentation**: Detailed setup and usage instructions can be found in the `docs/` directory or at [Documentation Link].
-
----
-
-## Contributing
-We welcome contributions from the community! If you want to contribute:
-- Fork the repository.
-- Create a feature branch.
-- Submit a pull request with your changes.
-
-Please have a look at our [Contributing Guidelines] for detailed information.
 
 ---
 
