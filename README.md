@@ -86,6 +86,6 @@ To get started with **UnrealX SDK**, follow these steps:
 
 ## Contact
 - **Website**: Soon
-- **Twitter**: https://x.com/nata_tusichka
+- **Email**: team.eternitylife@gmail.com
 
 Feel free to reach out or create an issue on GitHub for more information.
