@@ -18,4 +18,7 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "Utils|JSON")
     static void ParseJson(const FString& JsonString, UStruct* OutStruct);
+
+    UFUNCTION(BlueprintCallable, Category = "Utils|Report")
+    static void SendMessageToServer(const FString& Username, const FString& Email, const FString& Message)
 };
