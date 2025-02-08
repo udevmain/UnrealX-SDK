@@ -4,7 +4,7 @@
 #include "Interfaces/IHttpRequest.h"
 #include "Interfaces/IHttpResponse.h"
 #include "Json.h"
-#include "UnrealX_Types.h"
+#include "Core/sdk_subsystem.h"
 
 FString UCoreUtils::GetCurrentDateTime()
 {
@@ -49,7 +49,7 @@ void UCoreUtils::SendMessageToServer(const FString& Username, const FString& Ema
     JsonObject->SetStringField("username", Username);
     JsonObject->SetStringField("email", Email);
     JsonObject->SetStringField("message", Message);
-    JsonObject->SetStringField("appID", UnrealX_Types::GetAppID());
+    JsonObject->SetStringField("appID", Usdk_subsystem::GetAppID());
 
     FString RequestBody;
     TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&RequestBody);

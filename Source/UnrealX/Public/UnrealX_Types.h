@@ -15,11 +15,7 @@ enum class EUserData : uint8
 
 class UnrealX_Types
 {
-private:
-    const FString appID = "your-app-id-here"; 
-
 public:
-    FString GetAppID() { return appID };
 	UnrealX_Types();
 	~UnrealX_Types();
 };
