@@ -1,3 +1,5 @@
+// © 2025 UnrealX, all rights reserved by ELife Studio
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -5,48 +7,28 @@
 #include "HttpModule.h"
 #include "Interfaces/IHttpRequest.h"
 #include "Interfaces/IHttpResponse.h"
-#include "JsonObjectConverter.h"
+#include "UnrealX_Types.h"
 #include "SaveSystem.generated.h"
 
-USTRUCT(BlueprintType)
-struct FPlayerData
-{
-    GENERATED_BODY()
-
-    UPROPERTY(BlueprintReadWrite, Category = "Save System")
-    int32 PlayerID;
-
-    UPROPERTY(BlueprintReadWrite, Category = "Save System")
-    FString PlayerName;
-
-    UPROPERTY(BlueprintReadWrite, Category = "Save System")
-    int32 Level;
-
-    UPROPERTY(BlueprintReadWrite, Category = "Save System")
-    int32 Experience;
-};
+DECLARE_DYNAMIC_DELEGATE_TwoParams(FOnSaveComplete, bool, bSuccess, FString, ErrorMessage);
+DECLARE_DYNAMIC_DELEGATE_ThreeParams(FOnLoadComplete, bool, bSuccess, FString, ErrorMessage, FPlayerData, PlayerData);
 
 UCLASS()
-class UnrealX_API USaveSystem : public UObject
+class UNREALX_API USaveSystem : public UObject
 {
     GENERATED_BODY()
 
 public:
     UFUNCTION(BlueprintCallable, Category = "Save System")
-    static bool SavePlayerData(int32 PlayerID, const FPlayerData& Data, bool bAutoSync = true);
+    void SavePlayerData(const FPlayerData& Data, FOnSaveComplete OnComplete);
 
     UFUNCTION(BlueprintCallable, Category = "Save System")
-    static FPlayerData LoadPlayerData(int32 PlayerID);
+    void LoadPlayerData(FString PlayerID, FOnLoadComplete Callback);
 
     UFUNCTION(BlueprintCallable, Category = "Save System")
-    static bool DeletePlayerData(int32 PlayerID);
+    bool DeletePlayerData(FString PlayerID);
 
-    UFUNCTION(BlueprintCallable, Category = "Save System")
-    static bool ExportSaveData(int32 PlayerID, const FString& FilePath);
-
-    UFUNCTION(BlueprintCallable, Category = "Save System")
-    static bool ImportSaveData(int32 PlayerID, const FString& FilePath);
-
-    UFUNCTION(BlueprintCallable, Category = "Save System")
-    static bool RollbackPlayerData(int32 PlayerID, int32 VersionID);
+private:
+    static void OnSaveResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful, FOnSaveComplete Callback);
+    static void OnLoadResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful, FOnLoadComplete Callback);
 };

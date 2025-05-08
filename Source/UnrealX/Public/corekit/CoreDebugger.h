@@ -1,3 +1,5 @@
+// © 2025 UnrealX, all rights reserved by ELife Studio
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -5,7 +7,7 @@
 #include "CoreDebugger.generated.h"
 
 UCLASS()
-class UnrealX_API UCoreDebugger : public UBlueprintFunctionLibrary
+class UNREALX_API UCoreDebugger : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
 

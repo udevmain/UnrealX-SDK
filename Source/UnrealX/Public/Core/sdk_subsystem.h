@@ -1,3 +1,5 @@
+// © 2025 UnrealX, all rights reserved by ELife Studio
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -7,13 +9,14 @@
 #include "sdk_subsystem.generated.h"
 
 UCLASS()
-class UnrealX_API Usdk_subsystem : public UGameInstanceSubsystem
+class UNREALX_API Usdk_subsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
 	
 public:
-	FString GetAppID() { return appID };
+	UFUNCTION()
+	static FString GetAppID() { return appID; };
 
 private:
-	const FString appID = "your-appID-here";
+	static const FString appID;
 };

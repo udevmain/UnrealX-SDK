@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// © 2025 UnrealX, all rights reserved by ELife Studio
 
 #pragma once
 

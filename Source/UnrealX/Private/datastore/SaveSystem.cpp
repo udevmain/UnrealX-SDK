@@ -1,8 +1,16 @@
 #include "datastore/SaveSystem.h"
+#include "Core/sdk_subsystem.h"
+#include "UnrealX_Types.h"
+#include "corekit/CoreUtils.h"
+#include "JsonObjectConverter.h"
+#include "Containers/UnrealString.h"
 
-void USaveSystem::SavePlayerData(int32 PlayerID, const FPlayerData& Data)
+void USaveSystem::SavePlayerData(const FPlayerData& Data, FOnSaveComplete OnComplete)
 {
-    FString Url = "https://unrealx.space/api/save";
+    const FString Url = FString::Printf(TEXT("https://unrealx.space/api/save?PlayerID=%s"), *Data.PlayerID);
+    
+    FString AppID = Usdk_subsystem::GetAppID();
+
     TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
     FJsonObjectConverter::UStructToJsonObject(FPlayerData::StaticStruct(), &Data, JsonObject.ToSharedRef(), 0, 0);
     
@@ -14,26 +22,83 @@ void USaveSystem::SavePlayerData(int32 PlayerID, const FPlayerData& Data)
     Request->SetURL(Url);
     Request->SetVerb("POST");
     Request->SetHeader("Content-Type", "application/json");
+    Request->SetHeader("appID", AppID);
     Request->SetContentAsString(OutputString);
-    Request->OnProcessRequestComplete().BindStatic(&USaveSystem::OnSaveResponseReceived);
+
+    Request->OnProcessRequestComplete().BindStatic(&USaveSystem::OnSaveResponseReceived, OnComplete);
     Request->ProcessRequest();
 }
 
-void USaveSystem::LoadPlayerData(int32 PlayerID)
+void USaveSystem::OnSaveResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful, FOnSaveComplete OnComplete)
 {
-    FString Url = FString::Printf(TEXT("https://unrealx.space/api/load?PlayerID=%d"), PlayerID);
-    
+    if (!bWasSuccessful || !Response.IsValid())
+    {
+        OnComplete.ExecuteIfBound(false, TEXT("Request failed or invalid response."));
+        UCoreUtils::SendMessageToServer("SaveSystem", "OnSaveResponeReceived: 34", "Request failed or invalid response.");
+        return;
+    }
+
+    if (Response->GetResponseCode() != 200)
+    {
+        OnComplete.ExecuteIfBound(false, FString::Printf(TEXT("HTTP Error: %d"), Response->GetResponseCode()));
+        UCoreUtils::SendMessageToServer("SaveSystem", "OnSaveResponeReceived: 41", FString::Printf(TEXT("HTTP Error: %d"), Response->GetResponseCode()));
+        return;
+    }
+
+    OnComplete.ExecuteIfBound(true, TEXT(""));
+}
+
+void USaveSystem::LoadPlayerData(FString PlayerID, FOnLoadComplete Callback)
+{
+    FString Url = FString::Printf(TEXT("https://unrealx.space/api/load?PlayerID=%s"), *PlayerID);
+    FString AppID = Usdk_subsystem::GetAppID();
+
     TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = FHttpModule::Get().CreateRequest();
     Request->SetURL(Url);
     Request->SetVerb("GET");
     Request->SetHeader("Content-Type", "application/json");
-    Request->OnProcessRequestComplete().BindStatic(&USaveSystem::OnLoadResponseReceived);
+    Request->SetHeader("appID", AppID);
+
+    Request->OnProcessRequestComplete().BindStatic(&USaveSystem::OnLoadResponseReceived, Callback);
     Request->ProcessRequest();
 }
 
-bool USaveSystem::DeletePlayerData(int32 PlayerID)
+void USaveSystem::OnLoadResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful, FOnLoadComplete Callback)
 {
-    FString Url = FString::Printf(TEXT("https://unrealx.space/api/delete?PlayerID=%d"), PlayerID);
+    if (!bWasSuccessful || !Response.IsValid())
+    {
+        Callback.ExecuteIfBound(false, TEXT("Ошибка запроса"), FPlayerData());
+        return;
+    }
+
+    if (Response->GetResponseCode() != 200)
+    {
+        Callback.ExecuteIfBound(false, FString::Printf(TEXT("Ошибка сервера: %d"), Response->GetResponseCode()), FPlayerData());
+
+        return;
+    }
+
+    TSharedPtr<FJsonObject> JsonObject;
+    TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Response->GetContentAsString());
+    if (!FJsonSerializer::Deserialize(Reader, JsonObject) || !JsonObject.IsValid())
+    {
+        Callback.ExecuteIfBound(false, TEXT("JSON parsing error!"), FPlayerData());
+        return;
+    }
+
+    FPlayerData PlayerData;
+    if (!FJsonObjectConverter::JsonObjectToUStruct<FPlayerData>(JsonObject.ToSharedRef(), &PlayerData))
+    {
+        Callback.ExecuteIfBound(false, TEXT("Ошибка десериализации JSON"), FPlayerData());
+        return;
+    }
+
+    Callback.ExecuteIfBound(true, TEXT("Data uploaded successfully"), PlayerData);
+}
+
+bool USaveSystem::DeletePlayerData(FString PlayerID)
+{
+    FString Url = FString::Printf(TEXT("https://unrealx.space/api/delete?PlayerID=%s"), *PlayerID);
     
     TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = FHttpModule::Get().CreateRequest();
     Request->SetURL(Url);
@@ -42,49 +107,4 @@ bool USaveSystem::DeletePlayerData(int32 PlayerID)
     Request->ProcessRequest();
     
     return true;
-}
-
-bool USaveSystem::RollbackPlayerData(int32 PlayerID, int32 VersionID)
-{
-    FString Url = FString::Printf(TEXT("https://unrealx.space/api/rollback?PlayerID=%d&VersionID=%d"), PlayerID, VersionID);
-    
-    TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = FHttpModule::Get().CreateRequest();
-    Request->SetURL(Url);
-    Request->SetVerb("POST");
-    Request->SetHeader("Content-Type", "application/json");
-    Request->ProcessRequest();
-    
-    return true;
-}
-
-void USaveSystem::OnSaveResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
-{
-    if (bWasSuccessful && Response.IsValid())
-    {
-        UE_LOG(LogTemp, Log, TEXT("Save Successful: %s"), *Response->GetContentAsString());
-    }
-    else
-    {
-        UE_LOG(LogTemp, Error, TEXT("Save Failed"));
-    }
-}
-
-void USaveSystem::OnLoadResponseReceived(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
-{
-    if (bWasSuccessful && Response.IsValid())
-    {
-        FPlayerData LoadedData;
-        TSharedPtr<FJsonObject> JsonObject;
-        TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Response->GetContentAsString());
-        
-        if (FJsonSerializer::Deserialize(Reader, JsonObject))
-        {
-            FJsonObjectConverter::JsonObjectToUStruct<FPlayerData>(JsonObject.ToSharedRef(), &LoadedData, 0, 0);
-            UE_LOG(LogTemp, Log, TEXT("Load Successful: Player %d, Level %d"), LoadedData.PlayerID, LoadedData.Level);
-        }
-    }
-    else
-    {
-        UE_LOG(LogTemp, Error, TEXT("Load Failed"));
-    }
 }

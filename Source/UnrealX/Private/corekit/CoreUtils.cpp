@@ -4,7 +4,11 @@
 #include "Interfaces/IHttpRequest.h"
 #include "Interfaces/IHttpResponse.h"
 #include "Json.h"
+#include "JsonUtilitiesClasses.h"
 #include "Core/sdk_subsystem.h"
+#include <JsonObjectConverter.h>
+#include "OnlineSubsystem.h"
+#include "Interfaces/OnlineIdentityInterface.h"
 
 FString UCoreUtils::GetCurrentDateTime()
 {
@@ -15,12 +19,13 @@ FString UCoreUtils::GetCurrentDateTime()
 FString UCoreUtils::ConvertToJson(const UStruct* Data)
 {
     FString JsonString;
-    FJsonObjectConverter::UStructToJsonObjectString(Data, JsonString);
+    // FJsonObjectConverter::UStructToJsonObjectString(Data, JsonString);
     return JsonString;
 }
 
 void UCoreUtils::ParseJson(const FString& JsonString, UStruct* OutStruct)
-{
+{ 
+    /*
     TSharedPtr<FJsonObject> JsonObject;
     TSharedRef<TJsonReader<TCHAR>> Reader = TJsonReaderFactory<TCHAR>::Create(JsonString);
 
@@ -28,6 +33,8 @@ void UCoreUtils::ParseJson(const FString& JsonString, UStruct* OutStruct)
     {
         FJsonObjectConverter::JsonObjectStringToUStruct(JsonString, OutStruct, 0, 0);
     }
+    */
+    //maybe...
 }
 
 void UCoreUtils::SendMessageToServer(const FString& Username, const FString& Email, const FString& Message)
@@ -70,4 +77,76 @@ void UCoreUtils::SendMessageToServer(const FString& Username, const FString& Ema
     });
 
     Request->ProcessRequest();
+}
+
+FString UCoreUtils::GetOnlinePlatformName()
+{
+    IOnlineSubsystem* OnlineSub = IOnlineSubsystem::Get();
+    if (!OnlineSub)
+    {
+        return TEXT("Unknown");
+    }
+
+    const FString SubsystemName = OnlineSub->GetSubsystemName().ToString().ToLower();
+
+    if (SubsystemName.Contains(TEXT("steam")))
+    {
+        return TEXT("Steam");
+    }
+    else if (SubsystemName.Contains(TEXT("psn")) || SubsystemName.Contains(TEXT("ps5")))
+    {
+        return TEXT("PlayStation");
+    }
+    else if (SubsystemName.Contains(TEXT("xbox")) || SubsystemName.Contains(TEXT("live")))
+    {
+        return TEXT("Xbox");
+    }
+    else if (SubsystemName.Contains(TEXT("epic")))
+    {
+        return TEXT("Epic");
+    }
+    else if (SubsystemName.Contains(TEXT("ios")))
+    {
+        return TEXT("iOS");
+    }
+    else if (SubsystemName.Contains(TEXT("android")))
+    {
+        return TEXT("Android");
+    }
+    else if (SubsystemName.Contains(TEXT("null")))
+    {
+        return TEXT("Offline");
+    }
+
+    return SubsystemName;
+}
+
+FString UCoreUtils::GetUserPlatformID()
+{
+    // Get the current online subsystem (Steam, EOS, etc.)
+    IOnlineSubsystem* OnlineSubsystem = IOnlineSubsystem::Get();
+    if (!OnlineSubsystem)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("No OnlineSubsystem found."));
+        return TEXT("Unknown");
+    }
+
+    // Get identity interface
+    IOnlineIdentityPtr IdentityInterface = OnlineSubsystem->GetIdentityInterface();
+    if (!IdentityInterface.IsValid())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("IdentityInterface is invalid."));
+        return TEXT("Unknown");
+    }
+
+    // Get the local user ID (usually 0 for single-player or first logged-in user)
+    TSharedPtr<const FUniqueNetId> UserId = IdentityInterface->GetUniquePlayerId(0);
+    if (!UserId.IsValid())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Failed to get UniquePlayerId."));
+        return TEXT("Unknown");
+    }
+
+    // Convert the ID to string (platform-specific format)
+    return UserId->ToString();
 }

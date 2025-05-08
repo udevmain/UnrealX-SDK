@@ -1,26 +1,28 @@
+// © 2025 UnrealX, all rights reserved by ELife Studio
+
 #pragma once
 
 #include "CoreMinimal.h"
 #include "CoreFunctions.generated.h"
 
 UCLASS(Blueprintable)
-class UnrealX_API UCoreFunctions : public UObject
+class UNREALX_API UCoreFunctions : public UObject
 {
     GENERATED_BODY()
 
 public:
     UFUNCTION(BlueprintCallable, Category = "Core|Settings")
-    static bool InitCoreSettings(bool bUseDefaults);
+    bool InitCoreSettings(bool bUseDefaults);
 
     UFUNCTION(BlueprintCallable, Category = "Core|Info")
-    static FString GetCoreVersion();
+    FString GetCoreVersion();
 
     UFUNCTION(BlueprintCallable, Category = "Core|Shutdown")
-    static bool ShutdownCore();
+    bool ShutdownCore();
 
     UFUNCTION(BlueprintCallable, Category = "Core|Utilities")
-    static FString GenerateUniqueID(FString Prefix);
+    FString GenerateUniqueID(FString Prefix);
 
     UFUNCTION(BlueprintCallable, Category = "Core|Utilities")
-    static FString FormatString(FString Input, bool bToUpperCase);
+    FString FormatString(FString Input, bool bToUpperCase);
 };

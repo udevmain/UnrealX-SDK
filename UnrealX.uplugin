@@ -7,7 +7,7 @@
 	"Category": "Other",
 	"CreatedBy": "udev",
 	"CreatedByURL": "https://github.com/udevmain",
-	"DocsURL": "https://github.com/udevmain/UnrealX-SDK",
+	"DocsURL": "https://unrealx.space/docs",
 	"MarketplaceURL": "",
 	"SupportURL": "https://t.me/udev_support",
 	"CanContainContent": true,
@@ -15,33 +15,6 @@
 	"IsExperimentalVersion": true,
 	"Installed": false,
 	"Modules": [
-		{
-			"Name": "UnrealXMysqlZstd",
-			"Type": "Runtime",
-			"LoadingPhase": "PostConfigInit",
-			"PlatformAllowList": [
-				"Win64",
-				"Linux"
-			]
-		},
-		{
-			"Name": "UnrealXMysqlZLib",
-			"Type": "Runtime",
-			"LoadingPhase": "PostConfigInit",
-			"PlatformAllowList": [
-				"Win64",
-				"Linux"
-			]
-		},
-		{
-			"Name": "UnrealXMysqlLib",
-			"Type": "Runtime",
-			"LoadingPhase": "PostConfigInit",
-			"PlatformAllowList": [
-				"Win64",
-				"Linux"
-			]
-		},
 		{
 			"Name": "UnrealX",
 			"Type": "Runtime",

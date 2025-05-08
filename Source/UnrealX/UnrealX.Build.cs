@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// � 2025 UnrealX, all rights reserved by ELife Studio
 
 using UnrealBuildTool;
 
@@ -22,10 +22,13 @@ public class UnrealX : ModuleRules
 			"Slate",
 			"SlateCore",
 			"HTTP",
-			"UnrealXMysqlLib",
-			"UnrealXMysqlZLib",
-			"UnrealXMysqlZstd",
-			}
+            "Json",
+			"JsonUtilities",
+			"ApplicationCore", 
+			"WebBrowser", 
+			"EngineSettings",
+            "OnlineSubsystem", "OnlineSubsystemUtils"
+            }
 		);
 	}
 }
