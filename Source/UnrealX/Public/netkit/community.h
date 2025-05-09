@@ -36,7 +36,7 @@ public:
     static void GetExtraDataValue(const FString& UserID, const FString& Identifier, const FLatentActionInfo LatentInfo, FString& OutValue);
 
     UFUNCTION(BlueprintCallable, meta = (Latent, LatentInfo = "LatentInfo", AdvancedDisplay = "LatentInfo"), Category = "UserData")
-    static void CheckUserExists(const FString& AppID, const FString& Platform, const FString& PlatformID, const FLatentActionInfo LatentInfo, bool& bExists);
+    static void CheckUserExists(const FString& AppID, const FString& Platform, const FString& PlatformID, const FLatentActionInfo LatentInfo, bool& bExists, FString& OutDebugInfo);
 
     UFUNCTION(BlueprintCallable, meta = (Latent, LatentInfo = "LatentInfo", AdvancedDisplay = "LatentInfo"), Category = "UserData")
     static void AddUser(const FString& AppID, const FString& Platform, const FString& PlatformID, const FString& ExtraDataJson, const FLatentActionInfo LatentInfo, bool& bSuccess, FString& OutUserID, FString& OutResponse);
