@@ -38,8 +38,8 @@ public:
     UFUNCTION(BlueprintCallable, meta = (Latent, LatentInfo = "LatentInfo", AdvancedDisplay = "LatentInfo"), Category = "UserData")
     static void CheckUserExists(const FString& AppID, const FString& Platform, const FString& PlatformID, const FLatentActionInfo LatentInfo, bool& bExists);
 
-    UFUNCTION(BlueprintCallable, Category = "UserData")
-    static void AddUser(const FString& AppID, const FString& UserID, const FString& Platform, const FString& PlatformID, const FString& ExtraDataJson);
+    UFUNCTION(BlueprintCallable, meta = (Latent, LatentInfo = "LatentInfo", AdvancedDisplay = "LatentInfo"), Category = "UserData")
+    static void AddUser(const FString& AppID, const FString& Platform, const FString& PlatformID, const FString& ExtraDataJson, const FLatentActionInfo LatentInfo, bool& bSuccess, FString& OutUserID, FString& OutResponse);
 
     UFUNCTION(BlueprintCallable, meta = (Latent, LatentInfo = "LatentInfo", AdvancedDisplay = "LatentInfo"), Category = "UserData")
     static void UpdateUserExtraData(const FString& UserID, const FString& ExtraDataJson, const FLatentActionInfo LatentInfo, bool& bSuccess);

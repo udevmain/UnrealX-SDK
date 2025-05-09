@@ -9,6 +9,9 @@
 #include <JsonObjectConverter.h>
 #include "OnlineSubsystem.h"
 #include "Interfaces/OnlineIdentityInterface.h"
+#include "Dom/JsonObject.h"
+#include "Serialization/JsonWriter.h"
+#include "Dom/JsonValue.h"
 
 FString UCoreUtils::GetCurrentDateTime()
 {
@@ -149,4 +152,54 @@ FString UCoreUtils::GetUserPlatformID()
 
     // Convert the ID to string (platform-specific format)
     return UserId->ToString();
+}
+
+bool UCoreUtils::MakeJsonStringFromMap(const TMap<FString, FString>& InMap, FString& OutJsonString)
+{
+    TSharedRef<FJsonObject> JsonObject = MakeShared<FJsonObject>();
+
+    for (const TPair<FString, FString>& Pair : InMap)
+    {
+        JsonObject->SetStringField(Pair.Key, Pair.Value);
+    }
+
+    TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutJsonString);
+    return FJsonSerializer::Serialize(JsonObject, Writer);
+}
+
+bool UCoreUtils::MakeAdvancedJsonString(const TArray<FJsonKeyValue>& Pairs, FString& OutJsonString)
+{
+    TSharedRef<FJsonObject> JsonObject = MakeShared<FJsonObject>();
+
+    for (const FJsonKeyValue& Pair : Pairs)
+    {
+        switch (Pair.Type)
+        {
+        case EJsonValueType::String:
+            JsonObject->SetStringField(Pair.Key, Pair.Value);
+            break;
+
+        case EJsonValueType::Number:
+            JsonObject->SetNumberField(Pair.Key, FCString::Atod(*Pair.Value));
+            break;
+
+        case EJsonValueType::Boolean:
+            JsonObject->SetBoolField(Pair.Key, Pair.Value.ToBool());
+            break;
+
+        case EJsonValueType::JsonObject:
+        {
+            TSharedPtr<FJsonObject> NestedJson;
+            TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Pair.Value);
+            if (FJsonSerializer::Deserialize(Reader, NestedJson) && NestedJson.IsValid())
+            {
+                JsonObject->SetObjectField(Pair.Key, NestedJson);
+            }
+            break;
+        }
+        }
+    }
+
+    TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutJsonString);
+    return FJsonSerializer::Serialize(JsonObject, Writer);
 }

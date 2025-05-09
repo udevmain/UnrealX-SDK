@@ -1,15 +1,15 @@
 {
 	"FileVersion": 3,
 	"Version": 1,
-	"VersionName": "1.0",
+	"VersionName": "0.0.2",
 	"FriendlyName": "UnrealX",
 	"Description": "",
-	"Category": "Other",
+	"Category": "SDK",
 	"CreatedBy": "udev",
 	"CreatedByURL": "https://github.com/udevmain",
 	"DocsURL": "https://unrealx.space/docs",
 	"MarketplaceURL": "",
-	"SupportURL": "https://t.me/udev_support",
+	"SupportURL": "https://unrealx.space/support",
 	"CanContainContent": true,
 	"IsBetaVersion": true,
 	"IsExperimentalVersion": true,
@@ -19,6 +19,12 @@
 			"Name": "UnrealX",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "OnlineSubsystem",
+			"Enabled": true
 		}
 	]
 }

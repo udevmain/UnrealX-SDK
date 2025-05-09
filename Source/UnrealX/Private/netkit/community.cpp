@@ -22,7 +22,7 @@ public:
         , OutputLink(LatentInfo.Linkage)
         , CallbackTarget(LatentInfo.CallbackTarget)
     {
-        FString URL = FString::Printf(TEXT("https://unrealx.space/api/getUser?appID=%s&platform=%s&platformID=%s"),
+        FString URL = FString::Printf(TEXT("https://unrealx.space/gameApi/getUser?appID=%s&platform=%s&platformID=%s"),
             *FGenericPlatformHttp::UrlEncode(AppID), *FGenericPlatformHttp::UrlEncode(Platform), *FGenericPlatformHttp::UrlEncode(PlatformID));
 
         TSharedRef<IHttpRequest> Request = FHttpModule::Get().CreateRequest();
@@ -83,7 +83,7 @@ public:
         : OutValue(Result), ExecutionFunction(LatentInfo.ExecutionFunction),
         OutputLink(LatentInfo.Linkage), CallbackTarget(LatentInfo.CallbackTarget)
     {
-        FString URL = FString::Printf(TEXT("http://localhost:3000/api/getExtraDataValue?userID=%s&identifier=%s"),
+        FString URL = FString::Printf(TEXT("https://unrealx.space/gameApi/getExtraDataValue?userID=%s&identifier=%s"),
             *FGenericPlatformHttp::UrlEncode(UserID), *FGenericPlatformHttp::UrlEncode(Identifier));
 
         TSharedRef<IHttpRequest> Request = FHttpModule::Get().CreateRequest();
@@ -135,7 +135,7 @@ public:
         : bOutExists(Result), ExecutionFunction(LatentInfo.ExecutionFunction),
         OutputLink(LatentInfo.Linkage), CallbackTarget(LatentInfo.CallbackTarget)
     {
-        FString URL = FString::Printf(TEXT("https://unrealx.space/api/checkUserExists?appID=%s&platform=%s&platformID=%s"),
+        FString URL = FString::Printf(TEXT("https://unrealx.space/gameApi/checkUserExists?appID=%s&platform=%s&platformID=%s"),
             *FGenericPlatformHttp::UrlEncode(AppID), *FGenericPlatformHttp::UrlEncode(Platform), *FGenericPlatformHttp::UrlEncode(PlatformID));
 
         TSharedRef<IHttpRequest> Request = FHttpModule::Get().CreateRequest();
@@ -170,19 +170,104 @@ void UCommunity::CheckUserExists(const FString& AppID, const FString& Platform, 
     }
 }
 
-void UCommunity::AddUser(const FString& AppID, const FString& UserID, const FString& Platform, const FString& PlatformID, const FString& ExtraDataJson)
+class FAddUserAction : public FPendingLatentAction
 {
-    FString URL = FString::Printf(TEXT("https://unrealx.space/api/addUser?appID=%s&userID=%s&platform=%s&platformID=%s&extra_data=%s"),
-        *FGenericPlatformHttp::UrlEncode(AppID),
-        *FGenericPlatformHttp::UrlEncode(UserID),
-        *FGenericPlatformHttp::UrlEncode(Platform),
-        *FGenericPlatformHttp::UrlEncode(PlatformID),
-        *FGenericPlatformHttp::UrlEncode(ExtraDataJson));
+public:
+    bool& bOutSuccess;
+    FString& OutUserID;
+    FString& OutResponse; // Новое поле для хранения ответа сервера
+    FName ExecutionFunction;
+    int32 OutputLink;
+    FWeakObjectPtr CallbackTarget;
+    bool bCompleted = false;
 
-    TSharedRef<IHttpRequest> Request = FHttpModule::Get().CreateRequest();
-    Request->SetURL(URL);
-    Request->SetVerb("GET");
-    Request->ProcessRequest(); // Fire-and-forget
+    FAddUserAction(const FString& AppID, const FString& Platform, const FString& PlatformID, const FString& ExtraDataJson,
+        bool& Result, FString& GeneratedUserID, FString& ServerResponse, const FLatentActionInfo& LatentInfo)
+        : bOutSuccess(Result), OutUserID(GeneratedUserID), OutResponse(ServerResponse),
+        ExecutionFunction(LatentInfo.ExecutionFunction),
+        OutputLink(LatentInfo.Linkage), CallbackTarget(LatentInfo.CallbackTarget)
+    {
+        // Генерация userID
+        const FString Characters = TEXT("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
+        FString RandomID;
+        for (int32 i = 0; i < 16; ++i)
+        {
+            int32 Index = FMath::RandRange(0, Characters.Len() - 1);
+            RandomID.AppendChar(Characters[Index]);
+        }
+        OutUserID = "unrealX-ply-" + RandomID;
+
+        // Создание JSON тела
+        TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
+        JsonObject->SetStringField("appID", AppID);
+        JsonObject->SetStringField("userID", OutUserID);
+        JsonObject->SetStringField("platform", Platform);
+        JsonObject->SetStringField("platformID", PlatformID);
+        JsonObject->SetStringField("extra_data", ExtraDataJson);
+
+        FString RequestBody;
+        TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&RequestBody);
+        FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer);
+
+        // HTTP POST
+        TSharedRef<IHttpRequest> Request = FHttpModule::Get().CreateRequest();
+        Request->SetURL("https://unrealx.space/gameApi/addUser");
+        Request->SetVerb("POST");
+        Request->SetHeader("Content-Type", "application/json");
+        Request->SetContentAsString(RequestBody);
+
+        Request->OnProcessRequestComplete().BindLambda([this](FHttpRequestPtr Req, FHttpResponsePtr Resp, bool bSuccess)
+            {
+                if (!bSuccess || !Resp.IsValid())
+                {
+                    OutResponse = FString::Printf(TEXT("Request failed. Success: %d, Valid response: %d"),
+                        bSuccess, Resp.IsValid());
+                    bOutSuccess = false;
+                }
+                else
+                {
+                    OutResponse = Resp->GetContentAsString();
+
+                    // Проверяем код ответа и содержимое
+                    const int32 ResponseCode = Resp->GetResponseCode();
+                    bOutSuccess = (ResponseCode == 200);
+
+                    if (!bOutSuccess)
+                    {
+                        OutResponse = FString::Printf(TEXT("HTTP %d: %s"),
+                            ResponseCode, *OutResponse);
+                    }
+                }
+
+                // Логируем полный ответ для отладки
+                UE_LOG(LogTemp, Warning, TEXT("AddUser Response: %s"), *OutResponse);
+                bCompleted = true;
+            });
+
+        // Логируем отправляемый запрос
+        UE_LOG(LogTemp, Warning, TEXT("Sending AddUser request: %s"), *RequestBody);
+        Request->ProcessRequest();
+    }
+
+    virtual void UpdateOperation(FLatentResponse& Response) override
+    {
+        Response.FinishAndTriggerIf(bCompleted, ExecutionFunction, OutputLink, CallbackTarget);
+    }
+};
+
+void UCommunity::AddUser(const FString& AppID, const FString& Platform, const FString& PlatformID, const FString& ExtraDataJson,
+    const FLatentActionInfo LatentInfo, bool& bSuccess, FString& OutUserID, FString& OutResponse)
+{
+    if (UWorld* World = GEngine->GetWorldFromContextObjectChecked(LatentInfo.CallbackTarget))
+    {
+        FLatentActionManager& LatentManager = World->GetLatentActionManager();
+        if (!LatentManager.FindExistingAction<FAddUserAction>(LatentInfo.CallbackTarget, LatentInfo.UUID))
+        {
+            LatentManager.AddNewAction(LatentInfo.CallbackTarget, LatentInfo.UUID,
+                new FAddUserAction(AppID, Platform, PlatformID, ExtraDataJson,
+                    bSuccess, OutUserID, OutResponse, LatentInfo));
+        }
+    }
 }
 
 class FUpdateUserExtraDataAction : public FPendingLatentAction
@@ -199,7 +284,7 @@ public:
         : bOutSuccess(Result), ExecutionFunction(LatentInfo.ExecutionFunction),
         OutputLink(LatentInfo.Linkage), CallbackTarget(LatentInfo.CallbackTarget)
     {
-        FString URL = FString::Printf(TEXT("http://localhost:3000/api/updateUserExtraData?userID=%s&extra_data=%s"),
+        FString URL = FString::Printf(TEXT("http://unrealx.space/gameApi/updateUserExtraData?userID=%s&extra_data=%s"),
             *FGenericPlatformHttp::UrlEncode(UserID),
             *FGenericPlatformHttp::UrlEncode(ExtraDataJson));
 

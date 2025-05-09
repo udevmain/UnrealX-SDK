@@ -6,6 +6,30 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "CoreUtils.generated.h"
 
+UENUM(BlueprintType)
+enum class EJsonValueType : uint8
+{
+    String,
+    Number,
+    Boolean,
+    JsonObject
+};
+
+USTRUCT(BlueprintType)
+struct FJsonKeyValue
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    FString Key;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    EJsonValueType Type;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    FString Value;
+};
+
 UCLASS()
 class UNREALX_API UCoreUtils : public UBlueprintFunctionLibrary
 {
@@ -38,4 +62,12 @@ public:
     /** Returns the user's unique platform ID as string (e.g. SteamID64, Epic Account ID, etc.) */
     UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Utils|Online")
     static FString GetUserPlatformID();
+
+    /** Converts a map of key-value pairs into a JSON-formatted string */
+    UFUNCTION(BlueprintPure, Category = "UnrealX|JSON", meta = (DisplayName = "Make JSON String from Map"))
+    static bool MakeJsonStringFromMap(const TMap<FString, FString>& InMap, FString& OutJsonString);
+
+    /** Creates a JSON string from a list of key-value elements with different types */
+    UFUNCTION(BlueprintPure, Category = "UnrealX|JSON", meta = (DisplayName = "Make Advanced JSON String", Keywords = "json map string convert"))
+    static bool MakeAdvancedJsonString(const TArray<FJsonKeyValue>& Pairs, FString& OutJsonString);
 };
