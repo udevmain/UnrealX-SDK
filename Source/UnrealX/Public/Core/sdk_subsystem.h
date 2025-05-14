@@ -18,5 +18,5 @@ public:
 	static FString GetAppID() { return appID; };
 
 private:
-	static const FString appID;
+	static inline FString appID = "your-appID-here";
 };

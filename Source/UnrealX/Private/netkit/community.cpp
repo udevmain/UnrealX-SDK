@@ -4,6 +4,12 @@
 #include "Dom/JsonObject.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
+#include "corekit/CoreFunctions.h"
+#include "Core/sdk_subsystem.h"
+
+static FString getAppID() {
+    return Usdk_subsystem::GetAppID();
+}
 
 class FGetUserDataAction : public FPendingLatentAction
 {
@@ -56,7 +62,7 @@ public:
     }
 };
 
-void UCommunity::GetUserData(const FString& AppID, const FString& Platform, const FString& PlatformID, const FLatentActionInfo LatentInfo, FGameUserData& OutData)
+void UCommunity::GetUserDataByID(const FString& Platform, const FString& PlatformID, const FLatentActionInfo LatentInfo, FGameUserData& OutData)
 {
     if (UWorld* World = GEngine->GetWorldFromContextObjectChecked(LatentInfo.CallbackTarget))
     {
@@ -64,7 +70,7 @@ void UCommunity::GetUserData(const FString& AppID, const FString& Platform, cons
         if (!LatentManager.FindExistingAction<FGetUserDataAction>(LatentInfo.CallbackTarget, LatentInfo.UUID))
         {
             LatentManager.AddNewAction(LatentInfo.CallbackTarget, LatentInfo.UUID,
-                new FGetUserDataAction(AppID, Platform, PlatformID, OutData, LatentInfo));
+                new FGetUserDataAction(getAppID(), Platform, PlatformID, OutData, LatentInfo));
         }
     }
 }
@@ -108,7 +114,7 @@ public:
     }
 };
 
-void UCommunity::GetExtraDataValue(const FString& UserID, const FString& Identifier, const FLatentActionInfo LatentInfo, FString& OutValue)
+void UCommunity::GetExtraDataValueByID(const FString& UserID, const FString& Identifier, const FLatentActionInfo LatentInfo, FString& OutValue)
 {
     if (UWorld* World = GEngine->GetWorldFromContextObjectChecked(LatentInfo.CallbackTarget))
     {
@@ -194,7 +200,7 @@ public:
     }
 };
 
-void UCommunity::CheckUserExists(const FString& AppID, const FString& Platform, const FString& PlatformID,
+void UCommunity::CheckUserExists(const FString& Platform, const FString& PlatformID,
     const FLatentActionInfo LatentInfo, bool& bExists, FString& OutDebugInfo)
 {
     if (UWorld* World = GEngine->GetWorldFromContextObjectChecked(LatentInfo.CallbackTarget))
@@ -203,7 +209,7 @@ void UCommunity::CheckUserExists(const FString& AppID, const FString& Platform, 
         if (!LatentManager.FindExistingAction<FCheckUserExistsAction>(LatentInfo.CallbackTarget, LatentInfo.UUID))
         {
             LatentManager.AddNewAction(LatentInfo.CallbackTarget, LatentInfo.UUID,
-                new FCheckUserExistsAction(AppID, Platform, PlatformID, bExists, OutDebugInfo, LatentInfo));
+                new FCheckUserExistsAction(getAppID(), Platform, PlatformID, bExists, OutDebugInfo, LatentInfo));
         }
     }
 }
@@ -225,14 +231,7 @@ public:
         ExecutionFunction(LatentInfo.ExecutionFunction),
         OutputLink(LatentInfo.Linkage), CallbackTarget(LatentInfo.CallbackTarget)
     {
-        const FString Characters = TEXT("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
-        FString RandomID;
-        for (int32 i = 0; i < 16; ++i)
-        {
-            int32 Index = FMath::RandRange(0, Characters.Len() - 1);
-            RandomID.AppendChar(Characters[Index]);
-        }
-        OutUserID = "unrealX-ply-" + RandomID;
+        OutUserID = UCoreFunctions::GenerateUniqueID("unrealx-RaceOnLife-", 16);
 
         TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
         JsonObject->SetStringField("appID", AppID);
@@ -287,7 +286,7 @@ public:
     }
 };
 
-void UCommunity::AddUser(const FString& AppID, const FString& Platform, const FString& PlatformID, const FString& ExtraDataJson,
+void UCommunity::AddUser(const FString& Platform, const FString& PlatformID, const FString& ExtraDataJson,
     const FLatentActionInfo LatentInfo, bool& bSuccess, FString& OutUserID, FString& OutResponse)
 {
     if (UWorld* World = GEngine->GetWorldFromContextObjectChecked(LatentInfo.CallbackTarget))
@@ -296,7 +295,7 @@ void UCommunity::AddUser(const FString& AppID, const FString& Platform, const FS
         if (!LatentManager.FindExistingAction<FAddUserAction>(LatentInfo.CallbackTarget, LatentInfo.UUID))
         {
             LatentManager.AddNewAction(LatentInfo.CallbackTarget, LatentInfo.UUID,
-                new FAddUserAction(AppID, Platform, PlatformID, ExtraDataJson,
+                new FAddUserAction(getAppID(), Platform, PlatformID, ExtraDataJson,
                     bSuccess, OutUserID, OutResponse, LatentInfo));
         }
     }
@@ -339,7 +338,7 @@ public:
     }
 };
 
-void UCommunity::UpdateUserExtraData(const FString& UserID, const FString& ExtraDataJson, const FLatentActionInfo LatentInfo, bool& bSuccess)
+void UCommunity::UpdateUserExtraDataByID(const FString& UserID, const FString& ExtraDataJson, const FLatentActionInfo LatentInfo, bool& bSuccess)
 {
     if (UWorld* World = GEngine->GetWorldFromContextObjectChecked(LatentInfo.CallbackTarget))
     {

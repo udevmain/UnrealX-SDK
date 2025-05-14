@@ -6,7 +6,7 @@
 #include "CoreFunctions.generated.h"
 
 UCLASS(Blueprintable)
-class UNREALX_API UCoreFunctions : public UObject
+class UNREALX_API UCoreFunctions : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
 
@@ -15,14 +15,14 @@ public:
     bool InitCoreSettings(bool bUseDefaults);
 
     UFUNCTION(BlueprintCallable, Category = "Core|Info")
-    FString GetCoreVersion();
+    static FString GetCoreVersion();
 
     UFUNCTION(BlueprintCallable, Category = "Core|Shutdown")
     bool ShutdownCore();
 
     UFUNCTION(BlueprintCallable, Category = "Core|Utilities")
-    FString GenerateUniqueID(FString Prefix);
+    static FString GenerateUniqueID(FString Prefix, int32 Length);
 
     UFUNCTION(BlueprintCallable, Category = "Core|Utilities")
-    FString FormatString(FString Input, bool bToUpperCase);
+    static FString FormatString(FString Input, bool bToUpperCase);
 };

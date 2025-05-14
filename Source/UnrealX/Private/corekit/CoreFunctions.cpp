@@ -26,11 +26,17 @@ bool UCoreFunctions::ShutdownCore()
     return true;
 }
 
-FString UCoreFunctions::GenerateUniqueID(FString Prefix)
+FString UCoreFunctions::GenerateUniqueID(FString Prefix, int32 Length)
 {
-    static int32 Counter = 0;
-    FString UniqueID = FString::Printf(TEXT("%s_%d"), *Prefix, Counter++);
-    return UniqueID;
+    const FString Characters = TEXT("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
+    FString RandomID;
+    for (int32 i = 0; i < Length; ++i)
+    {
+        int32 Index = FMath::RandRange(0, Characters.Len() - 1);
+        RandomID.AppendChar(Characters[Index]);
+    }
+    FString OutUniqueID = Prefix + RandomID;
+    return OutUniqueID;
 }
 
 FString UCoreFunctions::FormatString(FString Input, bool bToUpperCase)
