@@ -125,7 +125,7 @@ class FCheckUserExistsAction : public FPendingLatentAction
 {
 public:
     bool& bOutExists;
-    FString& OutDebugInfo; // Добавлено для отладки
+    FString& OutDebugInfo;
     FName ExecutionFunction;
     int32 OutputLink;
     FWeakObjectPtr CallbackTarget;
@@ -136,7 +136,6 @@ public:
         : bOutExists(Result), OutDebugInfo(DebugInfo), ExecutionFunction(LatentInfo.ExecutionFunction),
         OutputLink(LatentInfo.Linkage), CallbackTarget(LatentInfo.CallbackTarget)
     {
-        // Формируем URL с кодированием параметров
         FString URL = FString::Printf(TEXT("https://unrealx.space/gameApi/userExists?appID=%s&platform=%s&platformID=%s"),
             *FGenericPlatformHttp::UrlEncode(AppID), *FGenericPlatformHttp::UrlEncode(Platform), *FGenericPlatformHttp::UrlEncode(PlatformID));
 
@@ -146,7 +145,7 @@ public:
         TSharedRef<IHttpRequest> Request = FHttpModule::Get().CreateRequest();
         Request->SetURL(URL);
         Request->SetVerb("GET");
-        Request->SetTimeout(10); // 10 секунд таймаут
+        Request->SetTimeout(10);
 
         Request->OnProcessRequestComplete().BindLambda([this](FHttpRequestPtr Request, FHttpResponsePtr Response, bool bSuccess)
             {
@@ -157,23 +156,27 @@ public:
                 DebugMessage += FString::Printf(TEXT("[Response] Success: %d, Code: %d, Content: %s\n"),
                     bSuccess, ResponseCode, *Content);
 
-                // Детальный анализ ответа
-                if (!bSuccess)
+                if (bSuccess && Response.IsValid() && ResponseCode == 200)
                 {
-                    DebugMessage += TEXT("[Error] Request failed completely\n");
-                }
-                else if (!Response.IsValid())
-                {
-                    DebugMessage += TEXT("[Error] Response is invalid\n");
-                }
-                else if (ResponseCode != 200)
-                {
-                    DebugMessage += FString::Printf(TEXT("[Error] HTTP %d: %s\n"),
-                        ResponseCode, *Response->GetContentAsString());
-                }
+                    TSharedPtr<FJsonObject> JsonObject;
+                    TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Content);
 
-                bOutExists = bSuccess && Response.IsValid() && ResponseCode == 200 && Content.Equals("1");
-                DebugMessage += FString::Printf(TEXT("[Result] User exists: %d\n"), bOutExists);
+                    if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
+                    {
+                        bOutExists = JsonObject->GetBoolField("exists");
+                        DebugMessage += FString::Printf(TEXT("[Parsed JSON] exists = %s\n"), bOutExists ? TEXT("true") : TEXT("false"));
+                    }
+                    else
+                    {
+                        bOutExists = false;
+                        DebugMessage += TEXT("[Error] Failed to parse JSON or invalid object\n");
+                    }
+                }
+                else
+                {
+                    bOutExists = false;
+                    DebugMessage += TEXT("[Error] HTTP request failed or returned invalid response\n");
+                }
 
                 OutDebugInfo = DebugMessage;
                 UE_LOG(LogTemp, Warning, TEXT("%s"), *DebugMessage);
@@ -210,7 +213,7 @@ class FAddUserAction : public FPendingLatentAction
 public:
     bool& bOutSuccess;
     FString& OutUserID;
-    FString& OutResponse; // Новое поле для хранения ответа сервера
+    FString& OutResponse;
     FName ExecutionFunction;
     int32 OutputLink;
     FWeakObjectPtr CallbackTarget;
@@ -222,7 +225,6 @@ public:
         ExecutionFunction(LatentInfo.ExecutionFunction),
         OutputLink(LatentInfo.Linkage), CallbackTarget(LatentInfo.CallbackTarget)
     {
-        // Генерация userID
         const FString Characters = TEXT("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
         FString RandomID;
         for (int32 i = 0; i < 16; ++i)
@@ -232,7 +234,6 @@ public:
         }
         OutUserID = "unrealX-ply-" + RandomID;
 
-        // Создание JSON тела
         TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
         JsonObject->SetStringField("appID", AppID);
         JsonObject->SetStringField("userID", OutUserID);
@@ -244,7 +245,6 @@ public:
         TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&RequestBody);
         FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer);
 
-        // HTTP POST
         TSharedRef<IHttpRequest> Request = FHttpModule::Get().CreateRequest();
         Request->SetURL("https://unrealx.space/gameApi/addUser");
         Request->SetVerb("POST");
@@ -263,7 +263,6 @@ public:
                 {
                     OutResponse = Resp->GetContentAsString();
 
-                    // Проверяем код ответа и содержимое
                     const int32 ResponseCode = Resp->GetResponseCode();
                     bOutSuccess = (ResponseCode == 200);
 
@@ -274,12 +273,10 @@ public:
                     }
                 }
 
-                // Логируем полный ответ для отладки
                 UE_LOG(LogTemp, Warning, TEXT("AddUser Response: %s"), *OutResponse);
                 bCompleted = true;
             });
 
-        // Логируем отправляемый запрос
         UE_LOG(LogTemp, Warning, TEXT("Sending AddUser request: %s"), *RequestBody);
         Request->ProcessRequest();
     }
