@@ -21,25 +21,31 @@ class UNREALX_API USolanaManager : public UObject {
   GENERATED_BODY()
 
 private:
-  solana::rpc::Connection* Connection = nullptr;
-  FString RpcUrl;
+    solana::rpc::Connection* Connection = nullptr;
+    FString RpcUrl;
 
 public:
-  UFUNCTION(BlueprintCallable, Category="Solana")
-  void Init(ESolanaNetwork Network);
+    UFUNCTION(BlueprintCallable, Category="Solana")
+    void Init(ESolanaNetwork Network);
 
-  UFUNCTION(BlueprintCallable, Category="Solana")
-  FString GetWalletAddress(const FString& PrivateKeyBase58);
+    UFUNCTION(BlueprintCallable, Category="Solana")
+    FString GetWalletAddress(const FString& PrivateKeyBase58);
 
-  UFUNCTION(BlueprintCallable, Category="Solana")
-  bool SendTransaction(const FString& FromPriv, const FString& ToPub, float AmountSOL, FString& OutSig);
+    UFUNCTION(BlueprintCallable, Category="Solana")
+    bool SendTransaction(const FString& FromPriv, const FString& ToPub, float AmountSOL, FString& OutSig);
 
-  UFUNCTION(BlueprintCallable, Category="Solana")
-  bool BatchTransaction(const FString& FromPriv, const TArray<FString>& ToPubs, float AmountPerAddr, TArray<FString>& OutSigs);
+    UFUNCTION(BlueprintCallable, Category="Solana")
+    bool BatchTransaction(const FString& FromPriv, const TArray<FString>& ToPubs, float AmountPerAddr, TArray<FString>& OutSigs);
 
-  UFUNCTION(BlueprintCallable, Category="Solana")
-  bool GetBalance(const FString& PubKey, double& OutBalance);
+    UFUNCTION(BlueprintCallable, Category="Solana")
+    bool GetBalance(const FString& PubKey, double& OutBalance);
 
-  UFUNCTION(BlueprintCallable, Category="Solana")
-  bool GetWalletNFTs(const FString& WalletAddress, TArray<FSolanaNFT>& OutNFTs);
+    UFUNCTION(BlueprintCallable, Category = "Solana")
+    void GetWalletNFTsAsync(const FString& WalletAddress);
+    
+private:
+    void OnNFTMetadataResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful, FString MintAddress, FString NameHint);
+    void InternalFetchNFTs(const FString& WalletAddress);
+
+    TMap<FString, FString> PendingNFTs;
 };
